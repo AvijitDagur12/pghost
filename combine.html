@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login and Display Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #4CAF50; /* Green color for the heading */
+            
+        }
+
+        #loginSection, #dataSection {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 800px; /* Moderate width for desktop */
+            margin: 20px 0;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+
+        input[type="email"], input[type="password"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50; /* Green button */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049; /* Darker green on hover */
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            display: none; /* Initially hide the table */
+            border-radius: 8px;
+            overflow: hidden; /* Rounded corners */
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #4CAF50; /* Green header */
+            color: white;
+            position: sticky; /* Makes the header stick to the top when scrolling */
+            top: 0;
+        }
+
+        td {
+            background-color: #f9f9f9; /* Light background for table cells */
+        }
+
+        @media (max-width: 600px) {
+            #loginSection, #dataSection {
+                width: 100%; /* Full width for mobile */
+            }
+
+            th, td {
+                padding: 8px; /* Smaller padding for mobile */
+            }
+
+            h2 {
+                font-size: 1.5em; /* Adjust heading size for mobile */
+            }
+        }
+
+        /* Responsive table for mobile */
+        @media (max-width: 768px) {
+            table, thead, tbody, th, td, tr {
+                display: block; /* Stack table rows on mobile */
+            }
+
+            thead tr {
+                position: relative; /* Show header in mobile */
+                display: none; /* Hide original header */
+            }
+
+            tr {
+                margin-bottom: 15px; /* Space between rows */
+                border: none; /* No border for rows */
+            }
+
+            td {
+                text-align: right; /* Align text to the right */
+                position: relative;
+                padding-left: 50%; /* Add space for labels */
+                border: 1px solid #ddd; /* Border for cells */
+            }
+
+            td::before {
+                content: attr(data-label); /* Use data-label for header in rows */
+                position: absolute;
+                left: 10px; /* Space from left */
+                width: calc(50% - 20px); /* Space for labels */
+                padding-right: 10px;
+                text-align: left; /* Align text to the left */
+                font-weight: bold; /* Bold labels */
+                color: #4CAF50; /* Color for labels */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loginSection">
+        <h2>Admin Login</h2>
+        <form id="loginForm">
+            <label for="email">Email:</label>
+            <input type="email" id="email" required>
+            <label for="password">Password:</label>
+            <input type="password" id="password" required>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+
+    <div id="dataSection" style="display:none;">
+        <h2 style="margin-top: 10rem;">Submitted Data</h2>
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Message</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data will be populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script type="module">
+        // Import Firebase functions
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1ibwr3TDD1iLWcE_3m06DGQHml2UB2kI",
+            authDomain: "avijit-b5367.firebaseapp.com",
+            projectId: "avijit-b5367",
+            storageBucket: "avijit-b5367.appspot.com",
+            messagingSenderId: "358516610171",
+            appId: "1:358516610171:web:0c9a14e14b4b0beed77ede",
+            measurementId: "G-8HYLDRLMPD"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Handle login form submission
+        document.getElementById('loginForm').addEventListener('submit', async (event) => {
+            event.preventDefault(); // Prevent form from submitting normally
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                // Attempt to sign in the user
+                await signInWithEmailAndPassword(auth, email, password);
+                // On successful login, show the data section
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('dataSection').style.display = 'block';
+                fetchData(); // Fetch data after login
+            } catch (error) {
+                console.error("Login failed: ", error.message);
+                // alert("Login failed avii: " + error.message); // Show error message
+                alert("Login Failed-Admin Login: "); // Show error message
+            }
+        });
+
+        // Function to fetch data from Firestore
+        async function fetchData() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "contact-form/contactdatastore/contact-data-storing"));
+                const tbody = document.querySelector('#dataTable tbody');
+
+                // Clear previous rows
+                tbody.innerHTML = ''; // Reset body
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const row = tbody.insertRow(-1);
+                    row.insertCell(0).textContent = data.Name;
+                    row.insertCell(1).textContent = data.Email;
+                    row.insertCell(2).textContent = data.Phone; // Added Phone data
+                    row.insertCell(3).textContent = data.Message;
+                    row.insertCell(4).textContent = data.Timestamp.toDate().toLocaleString(); // Format timestamp
+
+                    // Add data-label for responsive design
+                    for (let i = 0; i < row.cells.length; i++) {
+                        row.cells[i].setAttribute('data-label', document.querySelectorAll('#dataTable th')[i].innerText);
+                    }
+                });
+
+                document.getElementById('dataTable').style.display = 'table'; // Show the table
+            } catch (error) {
+                console.error("Error fetching documents: ", error);
+            }
+        }
+    </script>
+</body>
+</html>
